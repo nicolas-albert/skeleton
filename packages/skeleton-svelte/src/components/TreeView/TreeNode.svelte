@@ -1,51 +1,74 @@
 <script>
+	import { slide } from 'svelte/transition';
 	import TreeNode from './TreeNode.svelte';
 
-	let {
-		node,
-		indexPath,
-		api,
-		nodeIcon = ({ hasChildren, isOpen }) => (hasChildren ? (isOpen ? '◈' : '▢') : '─'),
-		controlClass = 'flex items-center gap-2 cursor-pointer',
-		textClass = 'text-sm',
-		indicatorClass = 'ml-auto text-muted',
-		childrenClass = 'pl-4'
-	} = $props();
+	let { animationConfig, node, indexPath, api, controlClass, textClass, indicatorClass, childrenClass, nodeIcon, nodeText, nodeIndicator } =
+		$props();
 
 	let nodeState = $derived(api.getNodeState({ node, indexPath }));
 </script>
 
+{#snippet nodeCommon({ node, indexPath })}
+	{#if !!nodeIcon}
+		{@render nodeIcon({
+			api,
+			node,
+			nodeState,
+			indexPath
+		})}
+	{/if}
+	<span {...api.getBranchTextProps({ node, indexPath })} class={textClass}>
+		{#if !!nodeText}
+			{@render nodeText({
+				api,
+				node,
+				nodeState,
+				indexPath
+			})}
+		{:else}
+			{node.name}
+		{/if}
+	</span>
+{/snippet}
+
 {#if nodeState.isBranch}
 	<div {...api.getBranchProps({ node, indexPath })}>
 		<div {...api.getBranchControlProps({ node, indexPath })} class={controlClass}>
-			<span>
-				{nodeIcon({
-					node,
-					hasChildren: true,
-					isOpen: nodeState.isOpen
-				})}
-			</span>
-			<span {...api.getBranchTextProps({ node, indexPath })} class={textClass}>
-				{node.name}
-			</span>
-			<span {...api.getBranchIndicatorProps({ node, indexPath })} class={indicatorClass}></span>
+			{@render nodeCommon({ node, indexPath })}
+			<span {...api.getBranchIndicatorProps({ node, indexPath })} class={indicatorClass}>
+				{#if !!nodeIndicator}
+					{@render nodeIndicator({
+						api,
+						node,
+						nodeState,
+						indexPath
+					})}
+				{/if}</span
+			>
 		</div>
-		<div {...api.getBranchContentProps({ node, indexPath })} class={childrenClass}>
-			<div {...api.getBranchIndentGuideProps({ node, indexPath })}></div>
-			{#each node.children as child, index}
-				<TreeNode node={child} {api} indexPath={[...indexPath, index]} />
-			{/each}
-		</div>
+		{#if nodeState.expanded}
+			<div {...api.getBranchContentProps({ node, indexPath })} class={childrenClass} transition:slide={animationConfig}>
+				<div {...api.getBranchIndentGuideProps({ node, indexPath })}></div>
+				{#each node.children as child, index}
+					<TreeNode
+						{api}
+						{animationConfig}
+						node={child}
+						indexPath={[...indexPath, index]}
+						{nodeIcon}
+						{nodeText}
+						{nodeIndicator}
+						{controlClass}
+						{textClass}
+						{indicatorClass}
+						{childrenClass}
+					/>
+				{/each}
+			</div>
+		{/if}
 	</div>
 {:else}
-	<div {...api.getItemProps({ node, indexPath })} class={controlClass + ' pl-6'}>
-		<span>
-			{nodeIcon({
-				node,
-				hasChildren: false,
-				isOpen: false
-			})}
-		</span>
-		<span class={textClass}>{node.name}</span>
+	<div {...api.getItemProps({ node, indexPath })} class={controlClass}>
+		{@render nodeCommon({ node, indexPath })}
 	</div>
 {/if}

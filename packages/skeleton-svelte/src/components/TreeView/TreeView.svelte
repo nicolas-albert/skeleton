@@ -1,21 +1,16 @@
 <script>
 	import { normalizeProps, useMachine } from '@zag-js/svelte';
 	import * as tree from '@zag-js/tree-view';
+	import { onMount, tick } from 'svelte';
 	import TreeNode from './TreeNode.svelte';
 
-	// type Node = {
-	//   id: string
-	//   name: string
-	//   children?: Node[]
-	// }
-
-	// export let nodes: Node[] = []
-	// let { nodes } = $props();
-
+	/** @type {any} */
 	const {
+		animationConfig = {
+			duration: 200
+		},
 		base = 'w-full',
 		classes = '',
-		label = 'Tree View',
 		labelBase = 'text-lg font-semibold mb-2',
 		treeBase = '',
 		rootNode = {
@@ -23,6 +18,14 @@
 			name: 'Root',
 			children: []
 		},
+		controlClass = 'flex items-center gap-2 cursor-pointer',
+		textClass = 'text-sm',
+		indicatorClass = 'ml-auto text-muted',
+		childrenClass = 'pl-4',
+		label,
+		nodeIcon,
+		nodeText,
+		nodeIndicator,
 		...zagProps
 	} = $props();
 
@@ -50,10 +53,24 @@
 </script>
 
 <div {...api.getRootProps()} class="{base} {classes}" data-testid="tree-view">
-	<h3 {...api.getLabelProps()} class={labelBase}>{label}</h3>
+	{#if !!label}
+		<h3 {...api.getLabelProps()} class={labelBase}>{@render label()}</h3>
+	{/if}
 	<div {...api.getTreeProps()} class={treeBase}>
 		{#each collection.rootNode.children as node, index}
-			<TreeNode {node} {api} indexPath={[index]} />
+			<TreeNode
+				{node}
+				{api}
+				indexPath={[index]}
+				{nodeIcon}
+				{nodeText}
+				{nodeIndicator}
+				{controlClass}
+				{textClass}
+				{indicatorClass}
+				{childrenClass}
+				{animationConfig}
+			/>
 		{/each}
 	</div>
 </div>
